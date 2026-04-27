@@ -2,10 +2,25 @@
 
 declare(strict_types=1);
 
-header('Access-Control-Allow-Origin: *');
+// Debug logging helper
+function debug_log($message) {
+    file_put_contents(__DIR__ . '/../logs/api.log', date('[Y-m-d H:i:s] ') . $message . PHP_EOL, FILE_APPEND);
+}
+
+// Ensure logs directory exists
+if (!is_dir(__DIR__ . '/../logs')) {
+    mkdir(__DIR__ . '/../logs', 0777, true);
+}
+
+// CORS Headers - Dynamic to support credentials
+$origin = $_SERVER['HTTP_ORIGIN'] ?? 'http://localhost';
+header("Access-Control-Allow-Origin: $origin");
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
+header('Access-Control-Allow-Credentials: true');
 header('Content-Type: application/json');
+
+debug_log("Request: " . $_SERVER['REQUEST_METHOD'] . " " . $_SERVER['REQUEST_URI']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;
@@ -15,13 +30,13 @@ require_once __DIR__ . '/../config/database.php';
 require_once __DIR__ . '/../controllers/EventController.php';
 require_once __DIR__ . '/../controllers/ParticipantController.php';
 require_once __DIR__ . '/../controllers/AdminController.php';
-require_once __DIR__ . '/../controllers/CertificateController.php';
+require_once __DIR__ . '/../controllers/PassController.php';
 
 use App\Config\Database;
 use App\Controllers\EventController;
 use App\Controllers\ParticipantController;
 use App\Controllers\AdminController;
-use App\Controllers\CertificateController;
+use App\Controllers\PassController;
 
 try {
     $database = new Database();
@@ -62,8 +77,8 @@ if ($resource === 'admin') {
             $controller->processRequest($method, $subResource);
             break;
 
-        case 'certificate':
-            $controller = new CertificateController($db);
+        case 'pass':
+            $controller = new PassController($db);
             $controller->processRequest($method);
             break;
 

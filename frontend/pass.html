@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Pass | Eventify</title>
+    <link rel="stylesheet" href="assets/css/design-system.css">
+    <style>
+        body { 
+            background: #e5e5e5; 
+            margin: 0; 
+            padding: 0; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+        }
+        .pass-container {
+            display: flex;
+            width: 700px;
+            height: 350px;
+            background: white;
+            border: 6px solid black;
+            box-shadow: 30px 30px 0px rgba(0,0,0,0.15);
+            position: relative;
+        }
+        .pass-left {
+            width: 60px;
+            background: black;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            writing-mode: vertical-rl;
+            transform: rotate(180deg);
+            color: white;
+            padding: 1rem;
+        }
+        .pass-main {
+            flex: 1;
+            padding: 2.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .pass-stub {
+            width: 180px;
+            border-left: 6px dashed black;
+            padding: 2.5rem;
+            background: #fafafa;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        .notch {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            background: #e5e5e5;
+            border: 6px solid black;
+            border-radius: 50%;
+            left: -23px;
+        }
+        .notch-top { top: -23px; }
+        .notch-bottom { bottom: -23px; }
+
+        .qr-area {
+            width: 100px;
+            height: 100px;
+            border: 4px solid black;
+            padding: 0.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            margin-bottom: 1.5rem;
+        }
+        .qr-pattern {
+            width: 100%;
+            height: 100%;
+            background-image: radial-gradient(black 20%, transparent 20%), radial-gradient(black 20%, transparent 20%);
+            background-position: 0 0, 5px 5px;
+            background-size: 10px 10px;
+        }
+
+        .label {
+            font-weight: 900;
+            font-size: 0.7rem;
+            letter-spacing: 0.2em;
+            color: var(--accent-color);
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+
+        @media print {
+            .no-print { display: none; }
+            body { background: white; }
+            .pass-container { box-shadow: none; border: 4px solid black; }
+        }
+    </style>
+</head>
+<body>
+    <div style="position: fixed; top: 2rem; right: 2rem;" class="no-print">
+        <button onclick="window.print()" class="btn btn-accent">DOWNLOAD PASS</button>
+    </div>
+
+    <div class="pass-container">
+        <div class="pass-left">
+            <span style="font-weight: 900; letter-spacing: 0.3em; font-size: 1.2rem;">EVENTIFY SYSTEM 2026</span>
+        </div>
+        
+        <div class="pass-main">
+            <div>
+                <div class="label">OFFICIAL PASS</div>
+                <h1 id="event-title" style="font-size: 2.5rem; line-height: 1; margin: 0.5rem 0 2rem 0; word-break: break-all;">EVENT TITLE</h1>
+                
+                <div style="display: flex; gap: 4rem;">
+                    <div>
+                        <div class="label">PARTICIPANT</div>
+                        <p id="participant-name" style="font-weight: 900; font-size: 1.2rem;">PARTICIPANT NAME</p>
+                    </div>
+                    <div>
+                        <div class="label">DATE</div>
+                        <p id="event-date" style="font-weight: 900; font-size: 1.2rem;">00.00.0000</p>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="label">LOCATION</div>
+                <p id="event-location" style="font-weight: 900; font-size: 1.2rem;">CAMPUS AUDITORIUM</p>
+            </div>
+        </div>
+
+        <div class="pass-stub">
+            <div class="notch notch-top"></div>
+            <div class="notch notch-bottom"></div>
+            
+            <div class="qr-area">
+                <div class="qr-pattern"></div>
+            </div>
+
+            <div style="text-align: center;">
+                <div class="label" style="margin-bottom: 0;">PASS ID</div>
+                <p id="pass-id" style="font-weight: 900; font-size: 1rem; font-family: monospace;">#00000000</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { API } from './assets/js/api.js';
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const id = urlParams.get('id');
+
+        async function init() {
+            try {
+                const data = await API.get(`pass?id=${id}`);
+                document.getElementById('event-title').textContent = data.event_title.toUpperCase();
+                document.getElementById('participant-name').textContent = data.name.toUpperCase();
+                document.getElementById('event-date').textContent = new Date(data.event_date).toLocaleDateString();
+                document.getElementById('event-location').textContent = data.location.toUpperCase();
+                document.getElementById('pass-id').textContent = '#' + id.substring(0, 8).toUpperCase();
+            } catch (err) {
+                document.body.innerHTML = '<div class="card" style="margin: 2rem;"><h1>UNAUTHORIZED</h1><p>This pass is not available or has not been approved yet.</p><br><a href="index.html" class="btn">GO HOME</a></div>';
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

@@ -27,14 +27,31 @@ class AdminController
         }
     }
 
+    private function ensureAuthenticated(): void
+    {
+        if (!isset($_SESSION['admin_id'])) {
+            http_response_code(403);
+            echo json_encode(['error' => 'Unauthorized']);
+            exit;
+        }
+    }
+
     public function processRequest(string $method, string $action): void
     {
+        // Admin actions require authentication
+        if ($action !== 'login') {
+            $this->ensureAuthenticated();
+        }
+
         switch ($action) {
             case 'login':
                 if ($method === 'POST') $this->login();
                 break;
             case 'logout':
                 $this->logout();
+                break;
+            case 'me':
+                $this->getMe();
                 break;
             case 'participants':
                 if ($method === 'GET') $this->listParticipants();
@@ -46,7 +63,14 @@ class AdminController
                 if ($method === 'POST') $this->updateStatus('rejected');
                 break;
             case 'events':
-                if ($method === 'POST') $this->createEvent();
+                if ($method === 'POST') {
+                    $this->createEvent();
+                } else if ($method === 'GET') {
+                    // Reuse public event controller logic or direct model call
+                    require_once __DIR__ . '/../models/Event.php';
+                    $eventModel = new \App\Models\Event($this->db);
+                    echo json_encode($eventModel->getAll());
+                }
                 if ($method === 'DELETE') $this->deleteEvent();
                 break;
             case 'gallery':
@@ -61,11 +85,6 @@ class AdminController
 
     private function uploadGallery(): void
     {
-        if (!isset($_SESSION['admin_id'])) {
-            http_response_code(403);
-            return;
-        }
-
         $eventId = $_POST['event_id'] ?? '';
         if (isset($_FILES['images'])) {
             $files = $_FILES['images'];
@@ -77,11 +96,16 @@ class AdminController
                     $file = [
                         'name' => $files['name'][$i],
                         'tmp_name' => $files['tmp_name'][$i],
-                        'size' => $files['size'][$i]
+                        'size' => $files['size'][$i],
+                        'error' => $files['error'][$i]
                     ];
-                    $url = $this->handleUpload($file);
-                    if ($url && $this->eventModel->addGalleryImage($eventId, $url)) {
-                        $success++;
+                    try {
+                        $url = $this->handleUpload($file);
+                        if ($url && $this->eventModel->addGalleryImage($eventId, $url)) {
+                            $success++;
+                        }
+                    } catch (\Exception $e) {
+                        error_log("Gallery Upload Error: " . $e->getMessage());
                     }
                 }
             }
@@ -91,70 +115,93 @@ class AdminController
 
     private function createEvent(): void
     {
-        if (!isset($_SESSION['admin_id'])) {
-            http_response_code(403);
-            return;
-        }
+        try {
+            $data = $_POST;
+            $banner_url = null;
 
-        $data = $_POST;
-        $banner_url = null;
+            if (empty($data['title']) || empty($data['event_date'])) {
+                http_response_code(400);
+                echo json_encode(['error' => 'Title and Date are required']);
+                return;
+            }
 
-        if (isset($_FILES['banner']) && $_FILES['banner']['error'] === UPLOAD_ERR_OK) {
-            $banner_url = $this->handleUpload($_FILES['banner']);
-        }
+            if (isset($_FILES['banner']) && $_FILES['banner']['error'] !== UPLOAD_ERR_NO_FILE) {
+                $banner_url = $this->handleUpload($_FILES['banner']);
+            }
 
-        $eventData = [
-            'title' => $data['title'] ?? '',
-            'description' => $data['description'] ?? '',
-            'event_date' => $data['event_date'] ?? '',
-            'location' => $data['location'] ?? '',
-            'banner_url' => $banner_url
-        ];
+            $eventData = [
+                'title' => $data['title'] ?? '',
+                'description' => $data['description'] ?? '',
+                'event_date' => $data['event_date'] ?? '',
+                'location' => $data['location'] ?? '',
+                'banner_url' => $banner_url
+            ];
 
-        if ($this->eventModel->create($eventData)) {
-            echo json_encode(['message' => 'Event created']);
-        } else {
+            if ($this->eventModel->create($eventData)) {
+                echo json_encode(['message' => 'Event created', 'status' => 'success']);
+            } else {
+                throw new \Exception("Failed to create event in database.");
+            }
+        } catch (\Exception $e) {
             http_response_code(500);
-            echo json_encode(['error' => 'Failed to create event']);
+            echo json_encode(['error' => $e->getMessage(), 'status' => 'error']);
+            error_log("Eventify Error: " . $e->getMessage());
         }
     }
 
-    private function handleUpload(array $file): ?string
+    private function handleUpload(array $file): string
     {
-        $maxSize = 50 * 1024 * 1024; // 50MB
-        if ($file['size'] > $maxSize) {
-            return null;
+        if ($file['error'] !== UPLOAD_ERR_OK) {
+            $errors = [
+                UPLOAD_ERR_INI_SIZE   => 'File exceeds upload_max_filesize in php.ini',
+                UPLOAD_ERR_FORM_SIZE  => 'File exceeds MAX_FILE_SIZE in HTML form',
+                UPLOAD_ERR_PARTIAL    => 'File was only partially uploaded',
+                UPLOAD_ERR_NO_FILE    => 'No file was uploaded',
+                UPLOAD_ERR_NO_TMP_DIR => 'Missing a temporary folder',
+                UPLOAD_ERR_CANT_WRITE => 'Failed to write file to disk',
+                UPLOAD_ERR_EXTENSION  => 'A PHP extension stopped the file upload',
+            ];
+            throw new \Exception($errors[$file['error']] ?? 'Unknown upload error');
         }
 
-        $uploadDir = __DIR__ . '/../uploads/';
+        $uploadDir = __DIR__ . '/../../uploads/';
         if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0777, true);
+            if (!@mkdir($uploadDir, 0777, true)) {
+                error_log("CRITICAL: Failed to create upload directory at $uploadDir");
+                throw new \Exception("Server configuration error: Cannot create upload directory. Please check permissions.");
+            }
         }
 
-        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
-        $filename = uniqid() . '.' . $extension;
-        $targetPath = $uploadDir . $filename;
+        if (!is_writable($uploadDir)) {
+            error_log("CRITICAL: Upload directory is not writable: $uploadDir");
+            throw new \Exception("Server configuration error: Upload directory is not writable.");
+        }
+
+        $fileName = time() . '_' . preg_replace('/[^A-Za-z0-9._-]/', '', $file['name']);
+        $targetPath = $uploadDir . $fileName;
 
         if (move_uploaded_file($file['tmp_name'], $targetPath)) {
-            return 'backend/uploads/' . $filename;
+            return 'uploads/' . $fileName;
         }
 
-        return null;
+        error_log("Failed to move file: " . $file['tmp_name'] . " to " . $targetPath);
+        throw new \Exception("Failed to save uploaded file. Check folder permissions.");
     }
 
     private function deleteEvent(): void
     {
-        if (!isset($_SESSION['admin_id'])) {
-            http_response_code(403);
+        $id = $_GET['id'] ?? '';
+        if (empty($id)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Event ID is required']);
             return;
         }
 
-        $id = $_GET['id'] ?? '';
         if ($this->eventModel->delete($id)) {
-            echo json_encode(['message' => 'Event deleted']);
+            echo json_encode(['message' => 'Event deleted', 'status' => 'success']);
         } else {
             http_response_code(500);
-            echo json_encode(['error' => 'Failed to delete event']);
+            echo json_encode(['error' => 'Failed to delete event', 'status' => 'error']);
         }
     }
 
@@ -180,6 +227,16 @@ class AdminController
     {
         session_destroy();
         echo json_encode(['message' => 'Logged out']);
+    }
+
+    private function getMe(): void
+    {
+        if (isset($_SESSION['admin_id'])) {
+            echo json_encode(['id' => $_SESSION['admin_id']]);
+        } else {
+            http_response_code(401);
+            echo json_encode(['error' => 'Not authenticated']);
+        }
     }
 
     private function updateStatus(string $status): void

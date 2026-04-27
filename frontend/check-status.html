@@ -27,7 +27,7 @@
 
         <main class="grid">
             <div class="card" style="grid-column: 1 / -1; max-width: 800px; margin: 0 auto;">
-                <p style="margin-bottom: 2rem; font-size: 1.2rem;">Enter your email to check your registration status and download your certificate if approved.</p>
+                <p style="margin-bottom: 2rem; font-size: 1.2rem;">Enter your email to check your registration status and download your event pass if approved.</p>
                 <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
                     <input type="email" id="status-email" placeholder="YOUR REGISTERED EMAIL" style="flex: 2; min-width: 250px;">
                     <button id="check-btn" class="btn" style="flex: 1; min-width: 150px;">CHECK NOW</button>
@@ -72,7 +72,7 @@
                             <p><strong>STATUS:</strong> <span style="font-weight: 900; color: ${p.status === 'approved' ? '#008000' : p.status === 'rejected' ? '#FF3000' : '#000'}">${p.status.toUpperCase()}</span></p>
                         </div>
                         ${p.status === 'approved' ? `
-                            <a href="certificate.html?id=${p.id}" target="_blank" class="btn">DOWNLOAD CERTIFICATE</a>
+                            <a href="pass.html?id=${p.id}" target="_blank" class="btn">DOWNLOAD PASS</a>
                         ` : p.status === 'pending' ? `
                             <p style="font-style: italic; opacity: 0.7;">Your registration is under review. Please check back later.</p>
                         ` : `

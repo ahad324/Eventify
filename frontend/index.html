@@ -15,14 +15,14 @@
             </div>
             <div class="nav-links">
                 <a href="index.html" class="nav-link">Home</a>
-                <a href="check-status.html" class="nav-link">Check Status</a>
+                <a href="check-registration.html" class="nav-link">Check Status</a>
                 <a href="admin/index.html" class="nav-link">Admin</a>
             </div>
         </nav>
 
         <header>
             <h1>CAMPUS<br>CONNECTIONS</h1>
-            <p style="font-weight: 700; margin-bottom: 4rem; opacity: 0.8; letter-spacing: 0.1em;">PREMIUM UNIVERSITY EVENT MANAGEMENT</p>
+            <p style="font-weight: 700; margin-bottom: 4rem; opacity: 0.8; letter-spacing: 0.1em; text-transform: uppercase;">OBJECTIVE EVENT MANAGEMENT SYSTEM</p>
         </header>
 
         <main class="grid" id="events-grid">
@@ -76,6 +76,10 @@
             const grid = document.getElementById('events-grid');
             try {
                 const events = await API.get('events');
+                if (events.length === 0) {
+                    grid.innerHTML += '<div style="grid-column: 1/-1; padding: 4rem; text-align: center; border: 4px dashed #ccc; font-weight: 900; opacity: 0.5;">NO UPCOMING EVENTS AT THIS TIME</div>';
+                    return;
+                }
                 events.forEach(event => {
                     const card = document.createElement('div');
                     card.className = 'card';
