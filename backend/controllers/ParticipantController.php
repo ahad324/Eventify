@@ -20,8 +20,13 @@ class ParticipantController
         $this->model = new Participant($db);
     }
 
-    public function processRequest(string $method): void
+    public function processRequest(string $method, string $action = ''): void
     {
+        if ($action === 'status') {
+            $this->checkStatus();
+            return;
+        }
+
         switch ($method) {
             case 'POST':
                 $this->register();
@@ -59,5 +64,24 @@ class ParticipantController
     {
         $eventId = $_GET['event_id'] ?? '';
         echo json_encode($this->model->getByEvent($eventId));
+    }
+
+    private function checkStatus(): void
+    {
+        $email = $_GET['email'] ?? '';
+        if (empty($email)) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Email required']);
+            return;
+        }
+
+        $stmt = $this->db->prepare("
+            SELECT p.*, e.title as event_title 
+            FROM participants p 
+            JOIN events e ON p.event_id = e.id 
+            WHERE p.email = ?
+        ");
+        $stmt->execute([$email]);
+        echo json_encode($stmt->fetchAll());
     }
 }

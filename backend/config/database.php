@@ -23,7 +23,15 @@ class Database
 
         try {
             // First attempt: Connect to the specific database
-            return $this->tryConnect();
+            $pdo = $this->tryConnect();
+            
+            // Check if tables are initialized (check for admins table)
+            $stmt = $pdo->query("SHOW TABLES LIKE 'admins'");
+            if ($stmt->rowCount() === 0) {
+                $this->autoSetup();
+                return $this->tryConnect();
+            }
+            return $pdo;
         } catch (PDOException $e) {
             // If database doesn't exist (Error 1049)
             if ($e->getCode() == 1049 || str_contains($e->getMessage(), 'Unknown database')) {

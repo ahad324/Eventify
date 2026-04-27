@@ -8,9 +8,17 @@
 </head>
 <body>
     <div class="container">
-        <div style="display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 4rem;">
-            <h1>DASHBOARD</h1>
-            <button id="logout-btn" class="btn">LOGOUT</button>
+        <nav class="navbar">
+            <a href="../index.html" class="nav-brand">EVENTIFY ADMIN</a>
+            <div class="nav-links">
+                <a href="dashboard.html" class="nav-link" style="color: var(--accent-color);">Participants</a>
+                <a href="events.html" class="nav-link">Manage Events</a>
+                <a href="#" id="logout-btn" class="nav-link">Logout</a>
+            </div>
+        </nav>
+
+        <div style="margin-bottom: 4rem;">
+            <h1>PARTICIPANTS</h1>
         </div>
 
         <div class="grid" id="participants-list">
@@ -23,7 +31,7 @@
 
         async function loadParticipants() {
             try {
-                const participants = await API.get('participants');
+                const participants = await API.get('admin/participants');
                 const container = document.getElementById('participants-list');
                 container.innerHTML = '';
 

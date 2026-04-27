@@ -8,6 +8,14 @@
 </head>
 <body>
     <div class="container">
+        <nav class="navbar">
+            <a href="index.html" class="nav-brand">EVENTIFY</a>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="admin/index.html" class="nav-link">Admin</a>
+            </div>
+        </nav>
+
         <header>
             <h1>EVENTIFY</h1>
             <p style="font-weight: 700; margin-bottom: 4rem;">OBJECTIVE EVENT MANAGEMENT SYSTEM</p>
@@ -17,6 +25,18 @@
             <h2 class="section-title">UPCOMING EVENTS</h2>
             <!-- Events will be injected here -->
         </main>
+
+        <section style="margin-top: 8rem; border-top: 2px solid black; padding-top: 4rem;">
+            <h2 class="section-title">CHECK REGISTRATION</h2>
+            <div class="card" style="max-width: 600px;">
+                <p style="margin-bottom: 2rem;">Enter your email to check your status and download your certificate.</p>
+                <div style="display: flex; gap: 1rem;">
+                    <input type="email" id="status-email" placeholder="YOUR EMAIL" style="flex: 1; padding: 1rem; border: 2px solid black; font-family: inherit; font-weight: 700;">
+                    <button id="check-btn" class="btn">CHECK</button>
+                </div>
+                <div id="status-result" style="margin-top: 2rem;"></div>
+            </div>
+        </section>
     </div>
 
     <script type="module">
@@ -40,6 +60,34 @@
             } catch (error) {
                 console.error(error);
             }
+
+            // Status Check Logic
+            document.getElementById('check-btn').onclick = async () => {
+                const email = document.getElementById('status-email').value;
+                const resultDiv = document.getElementById('status-result');
+                
+                if (!email) return;
+
+                try {
+                    const data = await API.get('participants/status', { email });
+                    if (data.length === 0) {
+                        resultDiv.innerHTML = '<p style="color: #FF3000;">NO REGISTRATION FOUND</p>';
+                        return;
+                    }
+
+                    resultDiv.innerHTML = data.map(p => `
+                        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #ddd;">
+                            <p><strong>EVENT:</strong> ${p.event_title}</p>
+                            <p><strong>STATUS:</strong> <span style="color: ${p.status === 'approved' ? '#008000' : p.status === 'rejected' ? '#FF3000' : '#000'}">${p.status.toUpperCase()}</span></p>
+                            ${p.status === 'approved' ? `
+                                <a href="certificate.html?id=${p.id}" target="_blank" class="btn" style="margin-top: 1rem; display: inline-block;">DOWNLOAD CERTIFICATE</a>
+                            ` : ''}
+                        </div>
+                    `).join('');
+                } catch (err) {
+                    console.error(err);
+                }
+            };
         }
 
         init();

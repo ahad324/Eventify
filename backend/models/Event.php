@@ -27,4 +27,40 @@ class Event
         $stmt->execute([$id]);
         return $stmt->fetch() ?: null;
     }
+
+    public function create(array $data): bool
+    {
+        $stmt = $this->db->prepare("
+            INSERT INTO events (id, title, description, event_date, location) 
+            VALUES (UUID(), ?, ?, ?, ?)
+        ");
+        return $stmt->execute([
+            $data['title'],
+            $data['description'],
+            $data['event_date'],
+            $data['location']
+        ]);
+    }
+
+    public function update(string $id, array $data): bool
+    {
+        $stmt = $this->db->prepare("
+            UPDATE events 
+            SET title = ?, description = ?, event_date = ?, location = ? 
+            WHERE id = ?
+        ");
+        return $stmt->execute([
+            $data['title'],
+            $data['description'],
+            $data['event_date'],
+            $data['location'],
+            $id
+        ]);
+    }
+
+    public function delete(string $id): bool
+    {
+        $stmt = $this->db->prepare("DELETE FROM events WHERE id = ?");
+        return $stmt->execute([$id]);
+    }
 }

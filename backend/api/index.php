@@ -33,7 +33,7 @@ try {
 }
 
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$uri = explode('/', $uri);
+$uri = explode('/', rtrim($uri, '/'));
 
 $resource = $uri[count($uri) - 2] ?? '';
 $action = $uri[count($uri) - 1] ?? '';
@@ -53,7 +53,7 @@ if ($resource === 'admin') {
 
         case 'participants':
             $controller = new ParticipantController($db);
-            $controller->processRequest($method);
+            $controller->processRequest($method, $action);
             break;
 
         case 'certificate':
