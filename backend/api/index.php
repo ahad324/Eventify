@@ -2,15 +2,7 @@
 
 declare(strict_types=1);
 
-// Debug logging helper
-function debug_log($message) {
-    file_put_contents(__DIR__ . '/../logs/api.log', date('[Y-m-d H:i:s] ') . $message . PHP_EOL, FILE_APPEND);
-}
-
-// Ensure logs directory exists
-if (!is_dir(__DIR__ . '/../logs')) {
-    mkdir(__DIR__ . '/../logs', 0777, true);
-}
+// Logging disabled
 
 // CORS Headers - Dynamic to support credentials
 $origin = $_SERVER['HTTP_ORIGIN'] ?? 'http://localhost';
@@ -20,7 +12,7 @@ header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-W
 header('Access-Control-Allow-Credentials: true');
 header('Content-Type: application/json');
 
-debug_log("Request: " . $_SERVER['REQUEST_METHOD'] . " " . $_SERVER['REQUEST_URI']);
+// Request processed
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     exit;

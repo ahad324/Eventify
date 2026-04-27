@@ -18,11 +18,9 @@ export class API {
             const query = new URLSearchParams(params).toString();
             const url = `${this.BASE_URL}/${resource}${query ? '?' + query : ''}`;
             
-            console.log(`API Request: GET ${url}`);
             const response = await fetch(url, { credentials: 'include' });
             if (!response.ok) {
                 const text = await response.text();
-                console.error(`API Error (${response.status}):`, text);
                 throw new Error(text || 'API request failed');
             }
             return await response.json();

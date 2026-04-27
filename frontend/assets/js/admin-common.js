@@ -38,7 +38,7 @@ export async function initAdminLayout() {
             try {
                 await API.get('admin/logout');
             } catch (err) {
-                console.error('Logout failed', err);
+                // Logout failed
             }
             window.location.href = 'index.html';
         };

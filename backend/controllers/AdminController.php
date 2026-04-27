@@ -145,7 +145,6 @@ class AdminController
         } catch (\Exception $e) {
             http_response_code(500);
             echo json_encode(['error' => $e->getMessage(), 'status' => 'error']);
-            error_log("Eventify Error: " . $e->getMessage());
         }
     }
 
@@ -167,13 +166,11 @@ class AdminController
         $uploadDir = __DIR__ . '/../../uploads/';
         if (!is_dir($uploadDir)) {
             if (!@mkdir($uploadDir, 0777, true)) {
-                error_log("CRITICAL: Failed to create upload directory at $uploadDir");
                 throw new \Exception("Server configuration error: Cannot create upload directory. Please check permissions.");
             }
         }
 
         if (!is_writable($uploadDir)) {
-            error_log("CRITICAL: Upload directory is not writable: $uploadDir");
             throw new \Exception("Server configuration error: Upload directory is not writable.");
         }
 
@@ -184,7 +181,6 @@ class AdminController
             return 'uploads/' . $fileName;
         }
 
-        error_log("Failed to move file: " . $file['tmp_name'] . " to " . $targetPath);
         throw new \Exception("Failed to save uploaded file. Check folder permissions.");
     }
 

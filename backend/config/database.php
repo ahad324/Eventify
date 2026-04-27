@@ -99,7 +99,6 @@ class Database
                 }
             }
         } catch (PDOException $e) {
-            error_log("AutoSetup Error: " . $e->getMessage());
         }
     }
 }
