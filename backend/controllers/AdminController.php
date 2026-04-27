@@ -27,10 +27,8 @@ class AdminController
         }
     }
 
-    public function processRequest(string $method, array $uri): void
+    public function processRequest(string $method, string $action): void
     {
-        $action = $uri[count($uri) - 1] ?? '';
-
         switch ($action) {
             case 'login':
                 if ($method === 'POST') $this->login();
@@ -51,10 +49,43 @@ class AdminController
                 if ($method === 'POST') $this->createEvent();
                 if ($method === 'DELETE') $this->deleteEvent();
                 break;
+            case 'gallery':
+                if ($method === 'POST') $this->uploadGallery();
+                break;
             default:
                 http_response_code(404);
                 echo json_encode(['error' => 'Action not found']);
                 break;
+        }
+    }
+
+    private function uploadGallery(): void
+    {
+        if (!isset($_SESSION['admin_id'])) {
+            http_response_code(403);
+            return;
+        }
+
+        $eventId = $_POST['event_id'] ?? '';
+        if (isset($_FILES['images'])) {
+            $files = $_FILES['images'];
+            $count = count($files['name']);
+            $success = 0;
+
+            for ($i = 0; $i < $count; $i++) {
+                if ($files['error'][$i] === UPLOAD_ERR_OK) {
+                    $file = [
+                        'name' => $files['name'][$i],
+                        'tmp_name' => $files['tmp_name'][$i],
+                        'size' => $files['size'][$i]
+                    ];
+                    $url = $this->handleUpload($file);
+                    if ($url && $this->eventModel->addGalleryImage($eventId, $url)) {
+                        $success++;
+                    }
+                }
+            }
+            echo json_encode(['message' => "Successfully uploaded {$success} images"]);
         }
     }
 
@@ -65,13 +96,50 @@ class AdminController
             return;
         }
 
-        $data = json_decode(file_get_contents('php://input'), true);
-        if ($this->eventModel->create($data)) {
+        $data = $_POST;
+        $banner_url = null;
+
+        if (isset($_FILES['banner']) && $_FILES['banner']['error'] === UPLOAD_ERR_OK) {
+            $banner_url = $this->handleUpload($_FILES['banner']);
+        }
+
+        $eventData = [
+            'title' => $data['title'] ?? '',
+            'description' => $data['description'] ?? '',
+            'event_date' => $data['event_date'] ?? '',
+            'location' => $data['location'] ?? '',
+            'banner_url' => $banner_url
+        ];
+
+        if ($this->eventModel->create($eventData)) {
             echo json_encode(['message' => 'Event created']);
         } else {
             http_response_code(500);
             echo json_encode(['error' => 'Failed to create event']);
         }
+    }
+
+    private function handleUpload(array $file): ?string
+    {
+        $maxSize = 50 * 1024 * 1024; // 50MB
+        if ($file['size'] > $maxSize) {
+            return null;
+        }
+
+        $uploadDir = __DIR__ . '/../uploads/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
+
+        $extension = pathinfo($file['name'], PATHINFO_EXTENSION);
+        $filename = uniqid() . '.' . $extension;
+        $targetPath = $uploadDir . $filename;
+
+        if (move_uploaded_file($file['tmp_name'], $targetPath)) {
+            return 'backend/uploads/' . $filename;
+        }
+
+        return null;
     }
 
     private function deleteEvent(): void
@@ -99,11 +167,12 @@ class AdminController
         $admin = $this->adminModel->getByUsername($username);
 
         if ($admin && password_verify($password, $admin['password'])) {
+            session_regenerate_id(true);
             $_SESSION['admin_id'] = $admin['id'];
-            echo json_encode(['message' => 'Login successful']);
+            echo json_encode(['message' => 'Login successful', 'status' => 'success']);
         } else {
             http_response_code(401);
-            echo json_encode(['error' => 'Invalid credentials']);
+            echo json_encode(['error' => 'Invalid credentials', 'status' => 'error']);
         }
     }
 

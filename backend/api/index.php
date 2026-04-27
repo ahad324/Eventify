@@ -32,28 +32,34 @@ try {
     exit;
 }
 
-$uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
-$uri = explode('/', rtrim($uri, '/'));
+// Robust Routing
+$requestUri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
+$pathParts = explode('/', $requestUri);
+$apiPos = array_search('index.php', $pathParts);
 
-$resource = $uri[count($uri) - 2] ?? '';
-$action = $uri[count($uri) - 1] ?? '';
+if ($apiPos === false) {
+    http_response_code(404);
+    echo json_encode(['error' => 'API Endpoint not found']);
+    exit;
+}
+
+$resource = $pathParts[$apiPos + 1] ?? '';
+$subResource = $pathParts[$apiPos + 2] ?? '';
 $method = $_SERVER['REQUEST_METHOD'];
 
-// Route by resource
 if ($resource === 'admin') {
     $controller = new AdminController($db);
-    $controller->processRequest($method, $uri);
+    $controller->processRequest($method, $subResource);
 } else {
-    $resource = $action; // Fallback for single-level resources
     switch ($resource) {
         case 'events':
             $controller = new EventController($db);
-            $controller->processRequest($method);
+            $controller->processRequest($method, $subResource);
             break;
 
         case 'participants':
             $controller = new ParticipantController($db);
-            $controller->processRequest($method, $action);
+            $controller->processRequest($method, $subResource);
             break;
 
         case 'certificate':
@@ -63,7 +69,7 @@ if ($resource === 'admin') {
 
         default:
             http_response_code(404);
-            echo json_encode(['error' => 'Resource not found']);
+            echo json_encode(['error' => "Resource '$resource' not found"]);
             break;
     }
 }

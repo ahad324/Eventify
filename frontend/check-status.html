@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Check Status | Eventify</title>
+    <link rel="stylesheet" href="assets/css/design-system.css">
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <div class="nav-brand-container">
+                <a href="index.html" class="nav-brand">EVENTIFY</a>
+                <span class="nav-tagline">ELEVATING EVERY EXPERIENCE</span>
+            </div>
+            <div class="nav-links">
+                <a href="index.html" class="nav-link">Home</a>
+                <a href="check-status.html" class="nav-link">Check Status</a>
+                <a href="admin/index.html" class="nav-link">Admin</a>
+            </div>
+        </nav>
+
+        <header>
+            <h1>STATUS</h1>
+            <p style="font-weight: 700; margin-bottom: 4rem;">CHECK YOUR REGISTRATION STATUS</p>
+        </header>
+
+        <main class="grid">
+            <div class="card" style="grid-column: 1 / -1; max-width: 800px; margin: 0 auto;">
+                <p style="margin-bottom: 2rem; font-size: 1.2rem;">Enter your email to check your registration status and download your certificate if approved.</p>
+                <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                    <input type="email" id="status-email" placeholder="YOUR REGISTERED EMAIL" style="flex: 2; min-width: 250px;">
+                    <button id="check-btn" class="btn" style="flex: 1; min-width: 150px;">CHECK NOW</button>
+                </div>
+                <div id="status-result" style="margin-top: 3rem;"></div>
+            </div>
+        </main>
+    </div>
+
+    <script type="module">
+        import { API } from './assets/js/api.js';
+
+        const checkBtn = document.getElementById('check-btn');
+        const emailInput = document.getElementById('status-email');
+        const resultDiv = document.getElementById('status-result');
+
+        checkBtn.onclick = async () => {
+            const email = emailInput.value.trim();
+            if (!email) {
+                alert('Please enter your email');
+                return;
+            }
+
+            try {
+                const data = await API.get('participants/status', { email });
+                
+                if (!data || data.length === 0) {
+                    resultDiv.innerHTML = `
+                        <div class="card" style="border-color: var(--accent-color);">
+                            <h3 style="color: var(--accent-color);">NO REGISTRATION FOUND</h3>
+                            <p>We couldn't find any registration for <strong>${email}</strong>. Please check the spelling or register for an event first.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                resultDiv.innerHTML = data.map(p => `
+                    <div class="card" style="margin-bottom: 2rem; border-left: 20px solid ${p.status === 'approved' ? '#008000' : p.status === 'rejected' ? '#FF3000' : '#000'}">
+                        <h3>${p.event_title}</h3>
+                        <div style="margin: 1.5rem 0;">
+                            <p><strong>PARTICIPANT:</strong> ${p.name}</p>
+                            <p><strong>STATUS:</strong> <span style="font-weight: 900; color: ${p.status === 'approved' ? '#008000' : p.status === 'rejected' ? '#FF3000' : '#000'}">${p.status.toUpperCase()}</span></p>
+                        </div>
+                        ${p.status === 'approved' ? `
+                            <a href="certificate.html?id=${p.id}" target="_blank" class="btn">DOWNLOAD CERTIFICATE</a>
+                        ` : p.status === 'pending' ? `
+                            <p style="font-style: italic; opacity: 0.7;">Your registration is under review. Please check back later.</p>
+                        ` : `
+                            <p style="color: var(--accent-color);">Unfortunately, your registration was not approved.</p>
+                        `}
+                    </div>
+                `).join('');
+            } catch (err) {
+                console.error(err);
+                resultDiv.innerHTML = '<p style="color: var(--accent-color);">An error occurred. Please try again later.</p>';
+            }
+        };
+
+        // Support Enter key
+        emailInput.onkeypress = (e) => {
+            if (e.key === 'Enter') checkBtn.click();
+        };
+    </script>
+</body>
+</html>

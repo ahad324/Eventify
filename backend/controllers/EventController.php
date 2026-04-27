@@ -20,8 +20,13 @@ class EventController
         $this->eventModel = new Event($db);
     }
 
-    public function processRequest(string $method): void
+    public function processRequest(string $method, string $action = ''): void
     {
+        if ($action === 'gallery') {
+            $this->getGallery();
+            return;
+        }
+
         switch ($method) {
             case 'GET':
                 $this->getAllEvents();
@@ -37,5 +42,15 @@ class EventController
     {
         $events = $this->eventModel->getAll();
         echo json_encode($events);
+    }
+
+    private function getGallery(): void
+    {
+        $eventId = $_GET['event_id'] ?? '';
+        if (empty($eventId)) {
+            http_response_code(400);
+            return;
+        }
+        echo json_encode($this->eventModel->getGallery($eventId));
     }
 }

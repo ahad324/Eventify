@@ -9,13 +9,18 @@
 <body>
     <div class="container">
         <nav class="navbar">
-            <a href="index.html" class="nav-brand">EVENTIFY</a>
+            <div class="nav-brand-container">
+                <a href="index.html" class="nav-brand">EVENTIFY</a>
+                <span class="nav-tagline">ELEVATING EVERY EXPERIENCE</span>
+            </div>
             <div class="nav-links">
                 <a href="index.html" class="nav-link">Home</a>
+                <a href="check-status.html" class="nav-link">Check Status</a>
                 <a href="admin/index.html" class="nav-link">Admin</a>
             </div>
         </nav>
         
+        <div id="event-banner-container"></div>
         <h1 id="event-title">LOADING...</h1>
         
         <div class="grid">
@@ -46,6 +51,9 @@
                 if (event) {
                     document.getElementById('event-title').textContent = event.title;
                     document.getElementById('event-desc').textContent = event.description;
+                    if (event.banner_url) {
+                        document.getElementById('event-banner-container').innerHTML = `<img src="${API.ROOT_URL}/${event.banner_url}" class="event-banner" alt="${event.title}">`;
+                    }
                 }
             } catch (error) {
                 console.error(error);

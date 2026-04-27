@@ -25,8 +25,8 @@ class Database
             // First attempt: Connect to the specific database
             $pdo = $this->tryConnect();
             
-            // Check if tables are initialized (check for admins table)
-            $stmt = $pdo->query("SHOW TABLES LIKE 'admins'");
+            // Check if tables are initialized (check for event_gallery table)
+            $stmt = $pdo->query("SHOW TABLES LIKE 'event_gallery'");
             if ($stmt->rowCount() === 0) {
                 $this->autoSetup();
                 return $this->tryConnect();

@@ -28,8 +28,8 @@ h1, h2, h3 {
     letter-spacing: -0.05em;
 }
 
-h1 { font-size: clamp(3rem, 10vw, 8rem); margin-bottom: 2rem; }
-h2 { font-size: clamp(2rem, 5vw, 4rem); margin-bottom: 1rem; }
+h1 { font-size: clamp(2rem, 6vw, 4.5rem); margin-bottom: 1.5rem; line-height: 1; }
+h2 { font-size: clamp(1.5rem, 4vw, 3rem); margin-bottom: 1rem; }
 
 .container {
     max-width: 1440px;
@@ -53,6 +53,16 @@ h2 { font-size: clamp(2rem, 5vw, 4rem); margin-bottom: 1rem; }
 .card:hover {
     background-color: var(--accent-color);
     color: var(--bg-color);
+}
+
+.card.no-hover:hover {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    transform: none;
+}
+
+.card.no-hover:hover h3 {
+    color: var(--text-color);
 }
 
 .btn {
@@ -116,10 +126,11 @@ input:focus {
 }
 
 .nav-brand {
-    font-size: 1.5rem;
+    font-size: 1.8rem;
     font-weight: 900;
     text-decoration: none;
     color: inherit;
+    line-height: 1;
 }
 
 .nav-links {
@@ -137,4 +148,145 @@ input:focus {
 
 .nav-link:hover {
     color: var(--accent-color);
+}
+
+.nav-tagline {
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    display: block;
+    margin-top: 0.2rem;
+    letter-spacing: 0.05em;
+    opacity: 0.7;
+}
+
+/* Loading State */
+.loader-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.loader-overlay.active {
+    display: flex;
+}
+
+.loader-spinner {
+    width: 50px;
+    height: 50px;
+    border: var(--border-width) solid var(--text-color);
+    border-top-color: var(--accent-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+.loader-text {
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+/* Contrast & Hover Enhancements */
+.btn:hover {
+    background-color: var(--accent-color);
+    color: var(--bg-color);
+}
+
+.card:hover h3 {
+    color: var(--bg-color);
+}
+
+/* Responsive Images */
+.event-banner {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+    border: var(--border-width) solid var(--text-color);
+    margin-bottom: 2rem;
+}
+
+.gallery-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-top: 2rem;
+}
+
+.gallery-item {
+    aspect-ratio: 1;
+    overflow: hidden;
+    border: 2px solid var(--text-color);
+    cursor: pointer;
+}
+
+.gallery-item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+.gallery-item:hover img {
+    transform: scale(1.1);
+}
+/* Modal System */
+.modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.9);
+    display: none;
+    z-index: 1000;
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+.modal.active {
+    display: block;
+}
+
+.modal-content {
+    background: var(--bg-color);
+    max-width: 1000px;
+    margin: 4rem auto;
+    border: var(--border-width) solid var(--text-color);
+    padding: 3rem;
+    position: relative;
+}
+
+.modal-close {
+    position: absolute;
+    top: 1rem;
+    right: 1rem;
+    font-size: 2rem;
+    font-weight: 900;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.card-banner {
+    width: calc(100% + 4rem);
+    height: 200px;
+    margin: -2rem -2rem 2rem -2rem;
+    object-fit: cover;
+    border-bottom: var(--border-width) solid var(--text-color);
+}
+
+.card:hover .card-banner {
+    border-color: var(--bg-color);
 }

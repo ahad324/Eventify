@@ -9,10 +9,14 @@
 <body>
     <div class="container">
         <nav class="navbar">
-            <a href="../index.html" class="nav-brand">EVENTIFY ADMIN</a>
+            <div class="nav-brand-container">
+                <a href="dashboard.html" class="nav-brand">EVENTIFY</a>
+                <span class="nav-tagline">ADMINISTRATION PORTAL</span>
+            </div>
             <div class="nav-links">
-                <a href="dashboard.html" class="nav-link">Participants</a>
-                <a href="events.html" class="nav-link" style="color: var(--accent-color);">Manage Events</a>
+                <a href="dashboard.html" class="nav-link">Home</a>
+                <a href="participants.html" class="nav-link">Participants</a>
+                <a href="events.html" class="nav-link" style="color: var(--accent-color);">Events</a>
                 <a href="#" id="logout-btn" class="nav-link">Logout</a>
             </div>
         </nav>
@@ -27,10 +31,26 @@
                 <h2 style="margin-bottom: 2rem;">CREATE NEW EVENT</h2>
                 <form id="event-form">
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2rem;">
-                        <input type="text" name="title" placeholder="EVENT TITLE" required>
-                        <input type="datetime-local" name="event_date" required>
-                        <input type="text" name="location" placeholder="LOCATION" required>
-                        <textarea name="description" placeholder="DESCRIPTION" style="grid-column: span 2; border: 4px solid black; padding: 1rem; font-family: inherit; font-weight: 700; height: 150px;"></textarea>
+                        <div style="grid-column: span 2;">
+                            <label style="font-weight: 900; display: block; margin-bottom: 0.5rem;">EVENT TITLE</label>
+                            <input type="text" name="title" placeholder="EVENT TITLE" required>
+                        </div>
+                        <div>
+                            <label style="font-weight: 900; display: block; margin-bottom: 0.5rem;">DATE & TIME</label>
+                            <input type="datetime-local" name="event_date" required>
+                        </div>
+                        <div>
+                            <label style="font-weight: 900; display: block; margin-bottom: 0.5rem;">LOCATION</label>
+                            <input type="text" name="location" placeholder="LOCATION" required>
+                        </div>
+                        <div style="grid-column: span 2;">
+                            <label style="font-weight: 900; display: block; margin-bottom: 0.5rem;">DESCRIPTION</label>
+                            <textarea name="description" placeholder="DESCRIPTION" style="width: 100%; border: 4px solid black; padding: 1rem; font-family: inherit; font-weight: 700; height: 100px;"></textarea>
+                        </div>
+                        <div style="grid-column: span 2;">
+                            <label style="font-weight: 900; display: block; margin-bottom: 0.5rem;">EVENT BANNER (MAX 50MB)</label>
+                            <input type="file" name="banner" accept="image/*" style="border: 4px dashed black; padding: 2rem; cursor: pointer;">
+                        </div>
                     </div>
                     <button type="submit" class="btn btn-accent" style="margin-top: 2rem;">CREATE EVENT</button>
                 </form>
@@ -41,10 +61,28 @@
                 <!-- Events will be injected here -->
             </div>
         </div>
+
+        <!-- Gallery Upload Modal Placeholder -->
+        <div id="gallery-modal" class="loader-overlay" style="background: rgba(0,0,0,0.8); color: white;">
+            <div class="card" style="background: white; color: black; max-width: 600px; width: 90%;">
+                <h2 style="margin-bottom: 2rem;">UPLOAD GALLERY IMAGES</h2>
+                <form id="gallery-form">
+                    <input type="hidden" name="event_id" id="modal-event-id">
+                    <input type="file" name="images[]" multiple accept="image/*" required style="margin-bottom: 2rem;">
+                    <div style="display: flex; gap: 1rem;">
+                        <button type="submit" class="btn btn-accent">UPLOAD</button>
+                        <button type="button" class="btn" id="close-modal">CANCEL</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
 
     <script type="module">
         import { API } from '../assets/js/api.js';
+
+        const modal = document.getElementById('gallery-modal');
+        const modalEventId = document.getElementById('modal-event-id');
 
         async function loadEvents() {
             try {
@@ -56,10 +94,14 @@
                     const card = document.createElement('div');
                     card.className = 'card';
                     card.innerHTML = `
+                        ${event.banner_url ? `<img src="${API.ROOT_URL}/${event.banner_url}" style="width: 100%; height: 150px; object-fit: cover; margin-bottom: 1rem; border: 2px solid black;">` : ''}
                         <h3>${event.title}</h3>
                         <p style="margin: 1rem 0;"><strong>DATE:</strong> ${new Date(event.event_date).toLocaleString()}</p>
                         <p style="margin-bottom: 1rem;"><strong>LOCATION:</strong> ${event.location}</p>
-                        <button class="btn delete-btn" data-id="${event.id}" style="background-color: #FF3000;">DELETE</button>
+                        <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                            <button class="btn gallery-btn" data-id="${event.id}">GALLERY</button>
+                            <button class="btn delete-btn" data-id="${event.id}" style="background-color: #FF3000;">DELETE</button>
+                        </div>
                     `;
                     container.appendChild(card);
                 });
@@ -76,6 +118,13 @@
                         }
                     };
                 });
+
+                document.querySelectorAll('.gallery-btn').forEach(btn => {
+                    btn.onclick = () => {
+                        modalEventId.value = btn.dataset.id;
+                        modal.classList.add('active');
+                    };
+                });
             } catch (error) {
                 console.error(error);
             }
@@ -84,16 +133,31 @@
         document.getElementById('event-form').onsubmit = async (e) => {
             e.preventDefault();
             const formData = new FormData(e.target);
-            const data = Object.fromEntries(formData.entries());
 
             try {
-                await API.post('admin/events', data);
+                await API.post('admin/events', formData);
                 e.target.reset();
                 loadEvents();
             } catch (err) {
                 alert('Failed to create event');
             }
         };
+
+        document.getElementById('gallery-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+
+            try {
+                const result = await API.post('admin/gallery', formData);
+                alert(result.message);
+                modal.classList.remove('active');
+                e.target.reset();
+            } catch (err) {
+                alert('Failed to upload gallery');
+            }
+        };
+
+        document.getElementById('close-modal').onclick = () => modal.classList.remove('active');
 
         document.getElementById('logout-btn').onclick = async () => {
             await API.get('admin/logout');

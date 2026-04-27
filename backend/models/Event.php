@@ -31,14 +31,15 @@ class Event
     public function create(array $data): bool
     {
         $stmt = $this->db->prepare("
-            INSERT INTO events (id, title, description, event_date, location) 
-            VALUES (UUID(), ?, ?, ?, ?)
+            INSERT INTO events (id, title, description, event_date, location, banner_url) 
+            VALUES (UUID(), ?, ?, ?, ?, ?)
         ");
         return $stmt->execute([
             $data['title'],
             $data['description'],
             $data['event_date'],
-            $data['location']
+            $data['location'],
+            $data['banner_url'] ?? null
         ]);
     }
 
@@ -46,7 +47,7 @@ class Event
     {
         $stmt = $this->db->prepare("
             UPDATE events 
-            SET title = ?, description = ?, event_date = ?, location = ? 
+            SET title = ?, description = ?, event_date = ?, location = ?, banner_url = ? 
             WHERE id = ?
         ");
         return $stmt->execute([
@@ -54,8 +55,22 @@ class Event
             $data['description'],
             $data['event_date'],
             $data['location'],
+            $data['banner_url'] ?? null,
             $id
         ]);
+    }
+
+    public function addGalleryImage(string $eventId, string $imageUrl): bool
+    {
+        $stmt = $this->db->prepare("INSERT INTO event_gallery (id, event_id, image_url) VALUES (UUID(), ?, ?)");
+        return $stmt->execute([$eventId, $imageUrl]);
+    }
+
+    public function getGallery(string $eventId): array
+    {
+        $stmt = $this->db->prepare("SELECT * FROM event_gallery WHERE event_id = ? ORDER BY created_at DESC");
+        $stmt->execute([$eventId]);
+        return $stmt->fetchAll();
     }
 
     public function delete(string $id): bool

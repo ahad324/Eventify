@@ -1,34 +1,67 @@
+import { Loader } from './loader.js';
+
 export class API {
-    static BASE_URL = window.location.pathname.includes('/admin/') 
-        ? '../../backend/api/index.php' 
-        : '../backend/api/index.php';
+    static get ROOT_URL() {
+        const path = window.location.pathname;
+        const index = path.indexOf('/frontend');
+        if (index === -1) return ''; // Fallback
+        return path.substring(0, index);
+    }
+
+    static get BASE_URL() {
+        return `${this.ROOT_URL}/backend/api/index.php`;
+    }
 
     static async get(resource, params = {}) {
-        const query = new URLSearchParams(params).toString();
-        const url = `${this.BASE_URL}/${resource}${query ? '?' + query : ''}`;
-        
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('API request failed');
-        return await response.json();
+        Loader.show();
+        try {
+            const query = new URLSearchParams(params).toString();
+            const url = `${this.BASE_URL}/${resource}${query ? '?' + query : ''}`;
+            
+            const response = await fetch(url, { credentials: 'include' });
+            if (!response.ok) throw new Error('API request failed');
+            return await response.json();
+        } finally {
+            Loader.hide();
+        }
     }
 
     static async post(resource, data) {
-        const response = await fetch(`${this.BASE_URL}/${resource}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(data)
-        });
-        
-        if (!response.ok) throw new Error('API request failed');
-        return await response.json();
+        Loader.show();
+        try {
+            const isFormData = data instanceof FormData;
+            const options = {
+                method: 'POST',
+                body: isFormData ? data : JSON.stringify(data),
+                credentials: 'include'
+            };
+
+            if (!isFormData) {
+                options.headers = { 'Content-Type': 'application/json' };
+            }
+
+            const response = await fetch(`${this.BASE_URL}/${resource}`, options);
+            if (!response.ok) throw new Error('API request failed');
+            return await response.json();
+        } finally {
+            Loader.hide();
+        }
     }
 
     static async delete(resource, params = {}) {
-        const query = new URLSearchParams(params).toString();
-        const url = `${this.BASE_URL}/${resource}${query ? '?' + query : ''}`;
-        
-        const response = await fetch(url, { method: 'DELETE' });
-        if (!response.ok) throw new Error('API request failed');
-        return await response.json();
+        Loader.show();
+        try {
+            const query = new URLSearchParams(params).toString();
+            const url = `${this.BASE_URL}/${resource}${query ? '?' + query : ''}`;
+            
+            const response = await fetch(url, { 
+                method: 'DELETE',
+                credentials: 'include'
+            });
+            if (!response.ok) throw new Error('API request failed');
+            return await response.json();
+        } finally {
+            Loader.hide();
+        }
     }
 }

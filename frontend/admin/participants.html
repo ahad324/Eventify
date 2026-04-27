@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Participants | Eventify Admin</title>
+    <link rel="stylesheet" href="../assets/css/design-system.css">
+</head>
+<body>
+    <div class="container">
+        <nav class="navbar">
+            <div class="nav-brand-container">
+                <a href="dashboard.html" class="nav-brand">EVENTIFY</a>
+                <span class="nav-tagline">ADMINISTRATION PORTAL</span>
+            </div>
+            <div class="nav-links">
+                <a href="dashboard.html" class="nav-link">Home</a>
+                <a href="participants.html" class="nav-link" style="color: var(--accent-color);">Participants</a>
+                <a href="events.html" class="nav-link">Events</a>
+                <a href="#" id="logout-btn" class="nav-link">Logout</a>
+            </div>
+        </nav>
+
+        <div style="margin-bottom: 4rem;">
+            <h1>PARTICIPANTS</h1>
+            <p style="font-weight: 700;">REVIEW AND MANAGE EVENT REGISTRATIONS</p>
+        </div>
+
+        <div class="grid" id="participants-list">
+            <!-- Dynamic Content -->
+        </div>
+    </div>
+
+    <script type="module">
+        import { API } from '../assets/js/api.js';
+
+        async function loadParticipants() {
+            try {
+                const participants = await API.get('admin/participants');
+                const container = document.getElementById('participants-list');
+                container.innerHTML = '';
+
+                if (participants.length === 0) {
+                    container.innerHTML = '<div class="card" style="grid-column: 1 / -1;"><h3>NO PARTICIPANTS YET</h3></div>';
+                }
+
+                participants.forEach(p => {
+                    const card = document.createElement('div');
+                    card.style.gridColumn = 'span 4';
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <p style="font-size: 0.8rem; font-weight: 900; margin-bottom: 0.5rem; color: var(--accent-color);">${p.event_title}</p>
+                        <h3 style="font-size: 1.5rem; margin-bottom: 0.5rem;">${p.name}</h3>
+                        <p style="font-weight: 700; color: #666; margin-bottom: 1rem;">${p.email}</p>
+                        <p style="text-transform: uppercase; font-weight: 900; margin-bottom: 2rem; border-top: 1px solid #eee; pt: 1rem;">STATUS: ${p.status}</p>
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                            ${p.status === 'pending' ? `
+                                <button class="btn btn-accent btn-sm approve-btn" data-id="${p.id}">APPROVE</button>
+                                <button class="btn btn-sm reject-btn" data-id="${p.id}" style="border: 2px solid black;">REJECT</button>
+                            ` : ''}
+                            ${p.status === 'approved' ? `
+                                <a href="../certificate.html?id=${p.id}" target="_blank" class="btn btn-accent btn-sm" style="text-decoration: none;">VIEW CERT</a>
+                            ` : ''}
+                        </div>
+                    `;
+                    container.appendChild(card);
+                });
+
+                attachListeners();
+            } catch (err) {
+                console.error(err);
+                if (err.message.includes('403')) window.location.href = 'index.html';
+            }
+        }
+
+        function attachListeners() {
+            document.querySelectorAll('.approve-btn').forEach(btn => {
+                btn.onclick = async () => {
+                    await API.post('admin/approve', { participant_id: btn.dataset.id });
+                    loadParticipants();
+                };
+            });
+            document.querySelectorAll('.reject-btn').forEach(btn => {
+                btn.onclick = async () => {
+                    await API.post('admin/reject', { participant_id: btn.dataset.id });
+                    loadParticipants();
+                };
+            });
+        }
+
+        document.getElementById('logout-btn').onclick = async () => {
+            await API.get('admin/logout');
+            window.location.href = 'index.html';
+        };
+
+        loadParticipants();
+    </script>
+
+    <style>
+        .btn-sm { padding: 0.5rem 1rem; font-size: 0.8rem; }
+    </style>
+</body>
+</html>

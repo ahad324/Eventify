@@ -7,7 +7,16 @@ CREATE TABLE IF NOT EXISTS events (
     description TEXT,
     event_date DATETIME NOT NULL,
     location VARCHAR(255),
+    banner_url VARCHAR(255) DEFAULT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS event_gallery (
+    id CHAR(36) PRIMARY KEY,
+    event_id CHAR(36),
+    image_url VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS participants (

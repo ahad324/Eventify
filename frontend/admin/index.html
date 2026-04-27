@@ -9,20 +9,31 @@
 <body>
     <div class="container">
         <nav class="navbar">
-            <a href="../index.html" class="nav-brand">EVENTIFY ADMIN</a>
+            <div class="nav-brand-container">
+                <a href="../index.html" class="nav-brand">EVENTIFY</a>
+                <span class="nav-tagline">ADMINISTRATION PORTAL</span>
+            </div>
             <div class="nav-links">
                 <a href="../index.html" class="nav-link">Main Site</a>
             </div>
         </nav>
         <div style="max-width: 500px; margin: 4rem auto 0 auto;">
-        <h1>ADMIN ACCESS</h1>
-        <form id="login-form">
-            <input type="text" name="username" placeholder="USERNAME" required>
-            <input type="password" name="password" placeholder="PASSWORD" required>
-            <button type="submit" class="btn btn-accent">LOGIN</button>
-        </form>
-        <div id="message" style="margin-top: 2rem; color: #FF3000; font-weight: 700;"></div>
-    </div>
+            <div class="card no-hover">
+                <h2 style="margin-bottom: 2rem;">ADMIN ACCESS</h2>
+                <form id="login-form">
+                    <div style="margin-bottom: 1.5rem;">
+                        <label style="font-weight: 900; display: block; margin-bottom: 0.5rem;">USERNAME</label>
+                        <input type="text" name="username" placeholder="ENTER USERNAME" required>
+                    </div>
+                    <div style="margin-bottom: 2rem;">
+                        <label style="font-weight: 900; display: block; margin-bottom: 0.5rem;">PASSWORD</label>
+                        <input type="password" name="password" placeholder="ENTER PASSWORD" required>
+                    </div>
+                    <button type="submit" class="btn btn-accent" style="width: 100%;">LOGIN TO DASHBOARD</button>
+                </form>
+                <div id="message" style="margin-top: 2rem; color: #FF3000; font-weight: 900; text-align: center;"></div>
+            </div>
+        </div>
 
     <script type="module">
         import { API } from '../assets/js/api.js';

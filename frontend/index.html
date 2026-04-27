@@ -9,16 +9,20 @@
 <body>
     <div class="container">
         <nav class="navbar">
-            <a href="index.html" class="nav-brand">EVENTIFY</a>
+            <div class="nav-brand-container">
+                <a href="index.html" class="nav-brand">EVENTIFY</a>
+                <span class="nav-tagline">ELEVATING EVERY EXPERIENCE</span>
+            </div>
             <div class="nav-links">
                 <a href="index.html" class="nav-link">Home</a>
+                <a href="check-status.html" class="nav-link">Check Status</a>
                 <a href="admin/index.html" class="nav-link">Admin</a>
             </div>
         </nav>
 
         <header>
-            <h1>EVENTIFY</h1>
-            <p style="font-weight: 700; margin-bottom: 4rem;">OBJECTIVE EVENT MANAGEMENT SYSTEM</p>
+            <h1>CAMPUS<br>CONNECTIONS</h1>
+            <p style="font-weight: 700; margin-bottom: 4rem; opacity: 0.8; letter-spacing: 0.1em;">PREMIUM UNIVERSITY EVENT MANAGEMENT</p>
         </header>
 
         <main class="grid" id="events-grid">
@@ -26,21 +30,47 @@
             <!-- Events will be injected here -->
         </main>
 
-        <section style="margin-top: 8rem; border-top: 2px solid black; padding-top: 4rem;">
-            <h2 class="section-title">CHECK REGISTRATION</h2>
-            <div class="card" style="max-width: 600px;">
-                <p style="margin-bottom: 2rem;">Enter your email to check your status and download your certificate.</p>
-                <div style="display: flex; gap: 1rem;">
-                    <input type="email" id="status-email" placeholder="YOUR EMAIL" style="flex: 1; padding: 1rem; border: 2px solid black; font-family: inherit; font-weight: 700;">
-                    <button id="check-btn" class="btn">CHECK</button>
-                </div>
-                <div id="status-result" style="margin-top: 2rem;"></div>
+        <div id="gallery-modal" class="modal">
+            <div class="modal-content">
+                <span class="modal-close" onclick="closeGallery()">&times;</span>
+                <h2 id="gallery-title">EVENT GALLERY</h2>
+                <div id="gallery-container" class="gallery-grid"></div>
             </div>
-        </section>
+        </div>
     </div>
 
     <script type="module">
         import { API } from './assets/js/api.js';
+
+        window.openGallery = async (eventId, title) => {
+            const modal = document.getElementById('gallery-modal');
+            const container = document.getElementById('gallery-container');
+            const titleElem = document.getElementById('gallery-title');
+            
+            titleElem.textContent = `${title} GALLERY`;
+            container.innerHTML = '';
+            modal.classList.add('active');
+
+            try {
+                const photos = await API.get(`events/gallery?event_id=${eventId}`);
+                if (photos.length === 0) {
+                    container.innerHTML = '<p>No photos uploaded yet.</p>';
+                } else {
+                    photos.forEach(photo => {
+                        const div = document.createElement('div');
+                        div.className = 'gallery-item';
+                        div.innerHTML = `<img src="${API.ROOT_URL}/${photo.image_url}" alt="Gallery Photo">`;
+                        container.appendChild(div);
+                    });
+                }
+            } catch (error) {
+                console.error('Failed to load gallery:', error);
+            }
+        };
+
+        window.closeGallery = () => {
+            document.getElementById('gallery-modal').classList.remove('active');
+        };
 
         async function init() {
             const grid = document.getElementById('events-grid');
@@ -49,45 +79,26 @@
                 events.forEach(event => {
                     const card = document.createElement('div');
                     card.className = 'card';
+                    
+                    const bannerImg = event.banner_url ? 
+                        `<img src="${API.ROOT_URL}/${event.banner_url}" class="card-banner" alt="${event.title}">` : 
+                        '<div class="card-banner" style="background: #eee; display: flex; align-items: center; justify-content: center; font-weight: 900; color: #ccc;">NO IMAGE</div>';
+
                     card.innerHTML = `
+                        ${bannerImg}
                         <h3>${event.title}</h3>
                         <p style="margin: 1rem 0;">${new Date(event.event_date).toLocaleDateString()}</p>
                         <p style="font-size: 0.9rem; margin-bottom: 2rem;">${event.location}</p>
-                        <a href="register.html?id=${event.id}" class="btn">Register</a>
+                        <div style="display: flex; gap: 1rem;">
+                            <a href="register.html?id=${event.id}" class="btn" style="flex: 1; text-align: center;">Register</a>
+                            <button onclick="openGallery('${event.id}', '${event.title.replace(/'/g, "\\'")}')" class="btn btn-accent" style="flex: 1;">Gallery</button>
+                        </div>
                     `;
                     grid.appendChild(card);
                 });
             } catch (error) {
                 console.error(error);
             }
-
-            // Status Check Logic
-            document.getElementById('check-btn').onclick = async () => {
-                const email = document.getElementById('status-email').value;
-                const resultDiv = document.getElementById('status-result');
-                
-                if (!email) return;
-
-                try {
-                    const data = await API.get('participants/status', { email });
-                    if (data.length === 0) {
-                        resultDiv.innerHTML = '<p style="color: #FF3000;">NO REGISTRATION FOUND</p>';
-                        return;
-                    }
-
-                    resultDiv.innerHTML = data.map(p => `
-                        <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid #ddd;">
-                            <p><strong>EVENT:</strong> ${p.event_title}</p>
-                            <p><strong>STATUS:</strong> <span style="color: ${p.status === 'approved' ? '#008000' : p.status === 'rejected' ? '#FF3000' : '#000'}">${p.status.toUpperCase()}</span></p>
-                            ${p.status === 'approved' ? `
-                                <a href="certificate.html?id=${p.id}" target="_blank" class="btn" style="margin-top: 1rem; display: inline-block;">DOWNLOAD CERTIFICATE</a>
-                            ` : ''}
-                        </div>
-                    `).join('');
-                } catch (err) {
-                    console.error(err);
-                }
-            };
         }
 
         init();
