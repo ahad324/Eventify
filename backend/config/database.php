@@ -22,22 +22,50 @@ class Database
         }
 
         try {
-            $this->conn = new PDO(
-                "mysql:host={$this->host};dbname={$this->db_name};charset=utf8mb4",
-                $this->username,
-                $this->password,
-                [
-                    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
-                    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
-                    PDO::ATTR_EMULATE_PREPARES => false,
-                ]
-            );
+            // First attempt: Connect to the specific database
+            return $this->tryConnect();
         } catch (PDOException $e) {
-            header('Content-Type: application/json', true, 500);
-            echo json_encode(['error' => 'Database connection failed']);
-            exit;
+            // If database doesn't exist (Error 1049)
+            if ($e->getCode() == 1049 || str_contains($e->getMessage(), 'Unknown database')) {
+                $this->autoSetup();
+                return $this->tryConnect();
+            }
+            throw $e;
         }
+    }
 
+    private function tryConnect(): PDO
+    {
+        $this->conn = new PDO(
+            "mysql:host={$this->host};dbname={$this->db_name};charset=utf8mb4",
+            $this->username,
+            $this->password,
+            [
+                PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+                PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+                PDO::ATTR_EMULATE_PREPARES => false,
+            ]
+        );
         return $this->conn;
+    }
+
+    private function autoSetup(): void
+    {
+        try {
+            $pdo = new PDO("mysql:host={$this->host}", $this->username, $this->password);
+            $pdo->exec("CREATE DATABASE IF NOT EXISTS `{$this->db_name}`");
+            $pdo->exec("USE `{$this->db_name}`");
+
+            $sqlFile = __DIR__ . '/../../database.sql';
+            if (file_exists($sqlFile)) {
+                $sql = file_get_contents($sqlFile);
+                $statements = array_filter(array_map('trim', explode(';', $sql)));
+                foreach ($statements as $stmt) {
+                    if (!empty($stmt)) $pdo->exec($stmt);
+                }
+            }
+        } catch (PDOException $e) {
+            // Log or ignore if already setup
+        }
     }
 }

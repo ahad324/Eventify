@@ -23,8 +23,14 @@ use App\Controllers\ParticipantController;
 use App\Controllers\AdminController;
 use App\Controllers\CertificateController;
 
-$database = new Database();
-$db = $database->connect();
+try {
+    $database = new Database();
+    $db = $database->connect();
+} catch (\Exception $e) {
+    header('Content-Type: application/json', true, 500);
+    echo json_encode(['error' => 'Connection failed: ' . $e->getMessage()]);
+    exit;
+}
 
 $uri = parse_url($_SERVER['REQUEST_URI'], PHP_URL_PATH);
 $uri = explode('/', $uri);
