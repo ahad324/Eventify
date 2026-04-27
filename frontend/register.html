@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register | Eventify</title>
+    <link rel="stylesheet" href="assets/css/design-system.css">
+</head>
+<body>
+    <div class="container">
+        <a href="index.html" style="text-decoration: none; color: black; font-weight: 900; margin-bottom: 2rem; display: block;">← BACK</a>
+        
+        <h1 id="event-title">LOADING...</h1>
+        
+        <div class="grid">
+            <div style="grid-column: span 6;">
+                <form id="registration-form">
+                    <input type="text" name="name" placeholder="FULL NAME" required>
+                    <input type="email" name="email" placeholder="EMAIL ADDRESS" required>
+                    <button type="submit" class="btn btn-accent">SUBMIT REGISTRATION</button>
+                </form>
+                <div id="message" style="margin-top: 2rem; font-weight: 700;"></div>
+            </div>
+            <div style="grid-column: span 6; border-left: 4px solid black; padding-left: 2rem;">
+                <p id="event-desc">Loading event details...</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { API } from './assets/js/api.js';
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const eventId = urlParams.get('id');
+
+        async function init() {
+            try {
+                const events = await API.get('events');
+                const event = events.find(e => e.id === eventId);
+                if (event) {
+                    document.getElementById('event-title').textContent = event.title;
+                    document.getElementById('event-desc').textContent = event.description;
+                }
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        document.getElementById('registration-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = {
+                event_id: eventId,
+                name: formData.get('name'),
+                email: formData.get('email')
+            };
+
+            try {
+                const res = await API.post('participants', data);
+                document.getElementById('message').textContent = 'SUCCESS: REGISTRATION PENDING APPROVAL';
+                e.target.reset();
+            } catch (err) {
+                document.getElementById('message').textContent = 'ERROR: REGISTRATION FAILED';
+            }
+        };
+
+        init();
+    </script>
+</body>
+</html>

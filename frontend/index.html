@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eventify | Swiss Modern</title>
+    <link rel="stylesheet" href="assets/css/design-system.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>EVENTIFY</h1>
+            <p style="font-weight: 700; margin-bottom: 4rem;">OBJECTIVE EVENT MANAGEMENT SYSTEM</p>
+        </header>
+
+        <main class="grid" id="events-grid">
+            <h2 class="section-title">UPCOMING EVENTS</h2>
+            <!-- Events will be injected here -->
+        </main>
+    </div>
+
+    <script type="module">
+        import { API } from './assets/js/api.js';
+
+        async function init() {
+            const grid = document.getElementById('events-grid');
+            try {
+                const events = await API.get('events');
+                events.forEach(event => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <h3>${event.title}</h3>
+                        <p style="margin: 1rem 0;">${new Date(event.event_date).toLocaleDateString()}</p>
+                        <p style="font-size: 0.9rem; margin-bottom: 2rem;">${event.location}</p>
+                        <a href="register.html?id=${event.id}" class="btn">Register</a>
+                    `;
+                    grid.appendChild(card);
+                });
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        init();
+    </script>
+</body>
+</html>

@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login | Eventify</title>
+    <link rel="stylesheet" href="../assets/css/design-system.css">
+</head>
+<body>
+    <div class="container" style="max-width: 500px; margin-top: 10vh;">
+        <h1>ADMIN ACCESS</h1>
+        <form id="login-form">
+            <input type="text" name="username" placeholder="USERNAME" required>
+            <input type="password" name="password" placeholder="PASSWORD" required>
+            <button type="submit" class="btn btn-accent">LOGIN</button>
+        </form>
+        <div id="message" style="margin-top: 2rem; color: #FF3000; font-weight: 700;"></div>
+    </div>
+
+    <script type="module">
+        import { API } from '../assets/js/api.js';
+
+        document.getElementById('login-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                await API.post('admin/login', data);
+                window.location.href = 'dashboard.html';
+            } catch (err) {
+                document.getElementById('message').textContent = 'INVALID CREDENTIALS';
+            }
+        };
+    </script>
+</body>
+</html>

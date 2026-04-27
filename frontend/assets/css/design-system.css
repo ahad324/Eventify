@@ -1,0 +1,106 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
+
+:root {
+    --bg-color: #ffffff;
+    --text-color: #000000;
+    --accent-color: #FF3000; /* Swiss Red */
+    --border-width: 4px;
+    --spacing: 1rem;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inter', sans-serif;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    line-height: 1.1;
+    overflow-x: hidden;
+}
+
+h1, h2, h3 {
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -0.05em;
+}
+
+h1 { font-size: clamp(3rem, 10vw, 8rem); margin-bottom: 2rem; }
+h2 { font-size: clamp(2rem, 5vw, 4rem); margin-bottom: 1rem; }
+
+.container {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 4rem 2rem;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(12, 1fr);
+    gap: 2rem;
+}
+
+.card {
+    grid-column: span 4;
+    border: var(--border-width) solid var(--text-color);
+    padding: 2rem;
+    transition: background-color 0.2s ease;
+}
+
+.card:hover {
+    background-color: var(--accent-color);
+    color: var(--bg-color);
+}
+
+.btn {
+    display: inline-block;
+    padding: 1rem 2rem;
+    background-color: var(--text-color);
+    color: var(--bg-color);
+    text-decoration: none;
+    font-weight: 700;
+    text-transform: uppercase;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.1s ease;
+}
+
+.btn:active {
+    transform: scale(0.95);
+}
+
+.btn-accent {
+    background-color: var(--accent-color);
+}
+
+input, textarea {
+    width: 100%;
+    padding: 1rem;
+    border: var(--border-width) solid var(--text-color);
+    font-size: 1.2rem;
+    margin-bottom: 1.5rem;
+    outline: none;
+}
+
+input:focus {
+    background-color: #f0f0f0;
+}
+
+.section-title {
+    grid-column: 1 / -1;
+    border-bottom: var(--border-width) solid var(--text-color);
+    padding-bottom: 1rem;
+    margin-bottom: 3rem;
+}
+
+@media (max-width: 992px) {
+    .card { grid-column: span 6; }
+}
+
+@media (max-width: 600px) {
+    .card { grid-column: span 12; }
+    h1 { font-size: 4rem; }
+}
